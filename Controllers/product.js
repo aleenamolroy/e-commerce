@@ -57,15 +57,18 @@ export const productadd= async(req,res)=>{
 
 export const productEdit= async (req,res)=>{
     try{
+        console.log(req.body.category)
         let photo=""
         if(req.file){
             photo=req.file.filename
         }
         const categoryobj=await Category.findOne({name:req.body.category})
+    
         console.log(categoryobj)
         const {id}=req.params
+        const productId= new mongoose.Types.ObjectId(id)
         const {name,price,stock,description,brand,productimg,category}=req.body
-        const updateproducts= await Product.findByIdAndUpdate(id,{name,price,stock,description,brand,productimg:photo,category:categoryobj._id})
+        const updateproducts= await Product.findByIdAndUpdate(productId,{name,price,stock,description,brand,productimg:photo,category:categoryobj._id})
         if(!updateproducts) {
             return res.status(404).json({message:"product not found"})
         }

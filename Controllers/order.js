@@ -44,8 +44,10 @@ export const viewOrder = async (req, res) => {
 
         const order = await Order.aggregate([
             { $match: { user: userId, _id: orderId } },
-            { $addFields: { totalPriceOrginal: "$totalPrice", payment:"$paymentStatus", Status:"$shippingStatus"} },
+            { $addFields: { totalPriceOrginal: "$totalPrice", payment: "$paymentStatus", Status: "$shippingStatus" } },
             { $unwind: "$items" },
+            { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "userDetails" } },
+            { $unwind: "$userDetails" },
             { $lookup: { from: "products", localField: "items.product", foreignField: "_id", as: "productDetails" } },
             { $unwind: "$productDetails" },
             { $lookup: { from: "categories", localField: "productDetails.category", foreignField: "_id", as: "categoryDetails" } },
@@ -53,24 +55,23 @@ export const viewOrder = async (req, res) => {
             {
                 $group: {
                     _id: "$_id",
-                    user: { $first: "$user" },
+                    user: { $first: "$userDetails.name" },
                     items: {
                         $push: {
                             product: {
                                 name: "$productDetails.name",
                                 price: "$productDetails.price",
-                                productimg: "$productDetails.productimg"
-                            },
-                            Category: {
-                                name: "$categoryDetails.name"
-                            },
-                            quantity: "$items.quantity",
-                            subtotal: { $multiply: ["$items.quantity", "$productDetails.price"] }
+                                productimg: "$productDetails.productimg",
+                                Category: "$categoryDetails.name",
+                                quantity: "$items.quantity",
+                                subtotal: { $multiply: ["$items.quantity", "$productDetails.price"] }
+                            }
+
                         }
                     },
                     Amount: { $first: "$totalPriceOrginal" },
-                    payment:{$first:"$payment"},
-                    status:{$first:"$Status"}
+                    payment: { $first: "$payment" },
+                    status: { $first: "$Status" }
                 }
             }
         ])
@@ -91,10 +92,10 @@ export const viewOrder = async (req, res) => {
 export const viewOrders_admin = async (req, res) => {
     try {
         const orders = await Order.aggregate([
-            { $addFields: { totalPriceOrginal: "$totalPrice", payment:"$paymentStatus", Status:"$shippingStatus"} },
+            { $addFields: { totalPriceOrginal: "$totalPrice", payment: "$paymentStatus", Status: "$shippingStatus" } },
             { $unwind: "$items" },
-            {$lookup:{from: "users", localField: "user", foreignField: "_id", as: "userDetails" }},
-             { $unwind: "$userDetails" },
+            { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "userDetails" } },
+            { $unwind: "$userDetails" },
             { $lookup: { from: "products", localField: "items.product", foreignField: "_id", as: "productDetails" } },
             { $unwind: "$productDetails" },
             { $lookup: { from: "categories", localField: "productDetails.category", foreignField: "_id", as: "categoryDetails" } },
@@ -110,48 +111,48 @@ export const viewOrders_admin = async (req, res) => {
                                 price: "$productDetails.price",
                                 productimg: "$productDetails.productimg"
                             },
-                            Category: {
-                                name: "$categoryDetails.name"
-                            },
+                            Category: "$categoryDetails.name"
+                            ,
                             quantity: "$items.quantity",
                             subtotal: { $multiply: ["$items.quantity", "$productDetails.price"] }
                         }
                     },
                     Amount: { $first: "$totalPriceOrginal" },
-                    payment:{$first:"$payment"},
-                    status:{$first:"$Status"}
+                    payment: { $first: "$payment" },
+                    status: { $first: "$Status" }
                 }
             },
-            {$sort:{_id:1}}
+            { $sort: { _id: 1 } }
         ])
         console.log(orders);
-        
+
         if (!orders || orders.length === 0) {
             return res.status(400).json({ message: 'order not found' })
         }
         return res.status(200).json({ orders })
     }
-     catch (err) {
+    catch (err) {
         console.log(err);
         return res.status(500).json({ message: 'server error' })
 
     }
-    
+
 }
-export const update_status=async (req,res)=>{
-    const {id}=req.params
-    const {paymentStatus,shippingStatus}=req.body
-    const Updateorder=await Order.findByIdAndUpdate(id,{paymentStatus,shippingStatus},{new:true})
-    const orderId= new mongoose.Types.ObjectId(id)
-    if(!Updateorder){
-        return res.status(400).json({message:"order not found"})
-    }
-    const order=await Order.aggregate([
-            {$match:{_id:orderId}},
-            { $addFields: { totalPriceOrginal: "$totalPrice", payment:"$paymentStatus", Status:"$shippingStatus"} },
+export const update_status = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { paymentStatus, shippingStatus } = req.body
+        const Updateorder = await Order.findByIdAndUpdate(id, { paymentStatus, shippingStatus }, { new: true })
+        const orderId = new mongoose.Types.ObjectId(id)
+        if (!Updateorder) {
+            return res.status(400).json({ message: "order not found" })
+        }
+        const order = await Order.aggregate([
+            { $match: { _id: orderId } },
+            { $addFields: { totalPriceOrginal: "$totalPrice", payment: "$paymentStatus", Status: "$shippingStatus" } },
             { $unwind: "$items" },
-            {$lookup:{from: "users", localField: "user", foreignField: "_id", as: "userDetails" }},
-             { $unwind: "$userDetails" },
+            { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "userDetails" } },
+            { $unwind: "$userDetails" },
             { $lookup: { from: "products", localField: "items.product", foreignField: "_id", as: "productDetails" } },
             { $unwind: "$productDetails" },
             { $lookup: { from: "categories", localField: "productDetails.category", foreignField: "_id", as: "categoryDetails" } },
@@ -175,9 +176,37 @@ export const update_status=async (req,res)=>{
                         }
                     },
                     Amount: { $first: "$totalPriceOrginal" },
-                    payment:{$first:"$payment"},
-                    status:{$first:"$Status"}
+                    payment: { $first: "$payment" },
+                    status: { $first: "$Status" }
                 }
             }])
-    return res.status(200).json({message:"status changed",Data:order})
+        return res.status(200).json({ message: "status changed", Data: order })
+    }
+    catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: 'server error' })
+
+    }
+}
+
+export const cancel_order = async (req, res) => {
+    try {
+        const { id } = req.params
+        const order = await Order.findOne({ _id: id })
+        const { shippingStatus } = req.body
+        console.log(req.body)
+        if (!order) {
+            return res.status(404).json({ message: "order not found" })
+        }
+        if (order.shippingStatus === 'delivered' || order.shippingStatus === 'cancelled') {
+            return res.status(400).json({ message: "You can't cancell this order please check the order status" })
+        }
+        const orderUpdate = await Order.findByIdAndUpdate(id, { shippingStatus }, { new: true })
+        return res.status(200).json({ message: "order cancelled" })
+    }
+    catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: 'server error' })
+
+    }
 }

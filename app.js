@@ -8,6 +8,7 @@ import category from "./Routers/category.js"
 import product from "./Routers/product.js"
 import cart from "./Routers/cart.js"
 import order from "./Routers/order.js"
+import logout  from "./Routers/logout.js"
 import MongoStore from "connect-mongo"
 dotenv.config()
 const app= express()
@@ -46,5 +47,6 @@ app.use('/category',category)
 app.use('/product',product)
 app.use('/cart',cart)
 app.use('/order',order)
+app.use('/logout',logout)
 app.listen(process.env.PORT,()=>{console.log(`http://localhost:${process.env.PORT}`);
 })

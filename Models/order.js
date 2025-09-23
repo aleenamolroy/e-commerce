@@ -11,7 +11,7 @@ const orderSchema=new mongoose.Schema({
     }],
     totalPrice:{type:Number},
     paymentStatus:{type:String,enum:["pending","paid","failed"],default:"pending"},
-    shippingStatus:{type:String,enum:["pending","Shipped","delivered"],default:"pending"}
+    shippingStatus:{type:String,enum:["pending","Shipped","delivered","cancelled"],default:"pending"}
 },{timestamps:true})
 const Order= mongoose.model('order',orderSchema)
 export default Order

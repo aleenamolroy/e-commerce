@@ -61,14 +61,14 @@ export const view=async (req,res)=>{
         if(!req.session.user){
             return res.status(401).json({message:"not logged in"})
         }
-        const userview=await User.findById(req.session.user.id).select("-password","-status")
+        const userview=await User.findById(req.session.user.id).select("-password")
         if (!userview) {
             return res.status(404).json({ message: "not a valid user" });
         }
         console.log(req.session.user)
         return res.status(200).json({user:userview})
     }
-    catch{
+    catch(err){
         console.log(err)
         return res.status(500)
     }
