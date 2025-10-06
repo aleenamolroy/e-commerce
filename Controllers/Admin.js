@@ -28,7 +28,11 @@ export async function Adminlogin(req, res) {
         }
         req.session.save(err => {
             if (err) return res.status(500).json({ message: "session not saved" });
-            return res.status(200).json({ message: "Successfuly Logged as admin", date: new Date().toString() })
+            return res.status(200).json({
+                _id: adminfound._id,
+                type: "admin",
+                message: "Successfully Logged as admin"
+            });
 
         })
     }
@@ -52,7 +56,7 @@ export const users = async (req, res) => {
 }
 //user change status
 
-export const changeStatus = async (req, res)=>{
+export const changeStatus = async (req, res) => {
     try {
         const { id } = req.params
         const { status } = req.body
@@ -62,7 +66,7 @@ export const changeStatus = async (req, res)=>{
         }
         return res.status(200).json({ message: `status successfully changed to ${status}` })
     }
-    catch(err){
-        return res.status(500).json({message:err})
+    catch (err) {
+        return res.status(500).json({ message: err })
     }
 }
