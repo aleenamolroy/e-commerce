@@ -48,9 +48,9 @@ export const users = async (req, res) => {
         if (!users) {
             return res.status(404).json({ message: "user not found" })
         }
-        return res.status(200).json({ data: users })
-    }
+        return res.status(200).json({ users }); }
     catch (err) {
+        console.log(err)
         res.status(500).json({ data: err })
     }
 }

@@ -93,13 +93,13 @@ export const viewOrders_admin = async (req, res) => {
     try {
         const orders = await Order.aggregate([
             { $addFields: { totalPriceOrginal: "$totalPrice", payment: "$paymentStatus", Status: "$shippingStatus" } },
-            { $unwind: "$items" },
+            { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
             { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "userDetails" } },
-            { $unwind: "$userDetails" },
+            { $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true } },
             { $lookup: { from: "products", localField: "items.product", foreignField: "_id", as: "productDetails" } },
-            { $unwind: "$productDetails" },
+            { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
             { $lookup: { from: "categories", localField: "productDetails.category", foreignField: "_id", as: "categoryDetails" } },
-            { $unwind: "$categoryDetails" },
+            { $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: "$_id",
@@ -142,45 +142,48 @@ export const update_status = async (req, res) => {
     try {
         const { id } = req.params
         const { paymentStatus, shippingStatus } = req.body
-        const Updateorder = await Order.findByIdAndUpdate(id, { paymentStatus, shippingStatus }, { new: true })
-        const orderId = new mongoose.Types.ObjectId(id)
-        if (!Updateorder) {
-            return res.status(400).json({ message: "order not found" })
+        const order= await Order.findById(id)
+        if(!order) return res.status(404).json({message:"Order not found"})
+        const validPaymentTransitions = {
+            pending: ["paid", "failed"],
+            paid: [],
+            failed: ["pending"],
+        };
+        if (
+            paymentStatus &&
+            paymentStatus !== order.paymentStatus &&
+            !validPaymentTransitions[order.paymentStatus]?.includes(paymentStatus)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message: `Invalid payment status transition from "${order.paymentStatus}" to "${paymentStatus}"`,
+                });
         }
-        const order = await Order.aggregate([
-            { $match: { _id: orderId } },
-            { $addFields: { totalPriceOrginal: "$totalPrice", payment: "$paymentStatus", Status: "$shippingStatus" } },
-            { $unwind: "$items" },
-            { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "userDetails" } },
-            { $unwind: "$userDetails" },
-            { $lookup: { from: "products", localField: "items.product", foreignField: "_id", as: "productDetails" } },
-            { $unwind: "$productDetails" },
-            { $lookup: { from: "categories", localField: "productDetails.category", foreignField: "_id", as: "categoryDetails" } },
-            { $unwind: "$categoryDetails" },
-            {
-                $group: {
-                    _id: "$_id",
-                    user: { $first: "$userDetails.name" },
-                    items: {
-                        $push: {
-                            product: {
-                                name: "$productDetails.name",
-                                price: "$productDetails.price",
-                                productimg: "$productDetails.productimg"
-                            },
-                            Category: {
-                                name: "$categoryDetails.name"
-                            },
-                            quantity: "$items.quantity",
-                            subtotal: { $multiply: ["$items.quantity", "$productDetails.price"] }
-                        }
-                    },
-                    Amount: { $first: "$totalPriceOrginal" },
-                    payment: { $first: "$payment" },
-                    status: { $first: "$Status" }
-                }
-            }])
-        return res.status(200).json({ message: "status changed", Data: order })
+        const validShippingTransitions = {
+            pending: ["shipped", "cancelled"],
+            shipped: ["delivered", "cancelled"],
+            delivered: [], 
+            cancelled: [], 
+        };
+        if (
+            shippingStatus &&
+            shippingStatus !== order.shippingStatus &&
+            !validShippingTransitions[order.shippingStatus]?.includes(shippingStatus)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message: `Invalid shipping status transition from "${order.shippingStatus}" to "${shippingStatus}"`,
+                });
+        }
+        const Updateorder = await Order.findByIdAndUpdate(id, { paymentStatus, shippingStatus }, { new: true })
+        // const orderId = new mongoose.Types.ObjectId(id)
+        if (!Updateorder) {
+            return res.status(404).json({ message: "order not found" })
+        }
+
+        return res.status(200).json({ message: "status changed" })
     }
     catch (err) {
         console.log(err);
@@ -192,7 +195,7 @@ export const update_status = async (req, res) => {
 export const cancel_order = async (req, res) => {
     try {
         const { id } = req.params
-        const order = await Order.findOne({ _id: id })
+        const order = await Order.findById(id )
         const { shippingStatus } = req.body
         console.log(req.body)
         if (!order) {

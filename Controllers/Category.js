@@ -1,4 +1,5 @@
 import Category from "../Models/category.js";
+import Product from "../Models/product.js";
 export const categorylist= async (req,res)=>{
     try{
         const categories= await Category.find()
@@ -63,6 +64,10 @@ export const categoryEdit= async (req,res)=>{
 export const categoryDelete= async (req,res)=>{
     const {id}=req.params
     try{
+        const productCount= await Product.countDocuments({category:id})
+        if(productCount>0){
+            return res.status(409).json({message:'Cannot delete category: Products are associated with this category.'})
+        }
         const deletecategory=await Category.findByIdAndDelete(id)
         if(!deletecategory) return res.status(404).json({message:'category not found'})
         return res.status(200).json({message:'category deleted successfully.',deletecategory})

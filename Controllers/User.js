@@ -47,7 +47,7 @@ export async function login(req, res) {
         req.session.save(err=>{
             if(err) return res.status(500).json({message:"session not saved"});
             return res.status(200).json({message:"Successfuly Logged in ",_id: userFound._id,
-                type: "user",email:email,date: new Date().toString()})
+                type: "user",email:email,name:userFound.name,profile_image:userFound.profile_image,date: new Date().toString()})
 
         })
 

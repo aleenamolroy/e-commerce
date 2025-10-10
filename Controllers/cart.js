@@ -119,7 +119,7 @@ export const AddCart = async (req, res) => {
         }
         cart.totalPrice = newTotal
         await cart.save()
-        res.status(200).json(cart)
+        return  res.status(200).json({cart,message:"Added to cart"})
     }
     catch (err) {
         console.log(err)
