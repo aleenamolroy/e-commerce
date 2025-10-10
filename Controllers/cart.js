@@ -3,7 +3,7 @@ import Product from "../Models/product.js";
 import mongoose from "mongoose";
 export const showcart = async (req, res) => {
     try {
-        const userId =new mongoose.Types.ObjectId(req.session.user.id)
+        const userId = new mongoose.Types.ObjectId(req.session.user.id)
         const cart = await Cart.aggregate([
             { $match: { user: userId } },
             { $addFields: { totalPriceOriginal: "$totalPrice" } },
@@ -17,7 +17,7 @@ export const showcart = async (req, res) => {
                 }
             },
             { $unwind: "$productDetails" },
-            {   
+            {
                 $lookup: {
                     from: "categories",
                     localField: "productDetails.category",
@@ -33,6 +33,7 @@ export const showcart = async (req, res) => {
                     items: {
                         $push: {
                             product: {
+                                id: "$productDetails._id",
                                 name: "$productDetails.name",
                                 price: "$productDetails.price",
                                 productimg: "$productDetails.productimg"
@@ -41,19 +42,20 @@ export const showcart = async (req, res) => {
                                 name: "$categoryDetails.name"
                             },
                             quantity: "$items.quantity",
-                            subtotal:{$multiply:["$items.quantity","$productDetails.price"]}
+                            subtotal: { $multiply: ["$items.quantity", "$productDetails.price"] }
                         }
                     },
                     totalPrice: { $first: "$totalPriceOriginal" }
                 }
             }
         ])
+        console.log(cart)
         return res.status(200).json(cart)
     }
     catch (err) {
         console.log(err);
-        
-        return res.status(500).json({message:"Internal server error"})
+
+        return res.status(500).json({ message: "Internal server error" })
     }
 }
 export const AddCart = async (req, res) => {
@@ -71,6 +73,9 @@ export const AddCart = async (req, res) => {
         const product = await Product.findById(productId)
         if (!product) {
             return res.status(404).json({ message: "product not found" })
+        }
+        if (product.stock === 0) {
+            return res.status(404).json({ message: "Stock Out" })
         }
         let cart = await Cart.findOne({ user: userId })
         if (!cart) {
@@ -117,9 +122,12 @@ export const AddCart = async (req, res) => {
             console.log(p)
             newTotal += p.price * item.quantity
         }
+
         cart.totalPrice = newTotal
+        product.stock = product.stock - quantity
         await cart.save()
-        return  res.status(200).json({cart,message:"Added to cart"})
+        await product.save()
+        return res.status(200).json({ cart, message: "Added to cart" })
     }
     catch (err) {
         console.log(err)
@@ -132,6 +140,7 @@ export const updatecart = async (req, res) => {
         const userId = req.session.user.id
         const productId = req.params.id
         const { quantity } = req.body
+        console.log(quantity)
         // const product= await Product.findById(productId)
         // const newCart= await Cart.findOne({user:userId})
         // if (!newCart) return res.status(404).json({ message: "Cart not found" });
@@ -139,6 +148,12 @@ export const updatecart = async (req, res) => {
         //         (item)=>item.product.toString() === productId
         // )
         // newCart.items[itemIndex].quantity=quantity
+        const cartdata = await Cart.findOne({ user: userId });
+        const productofcart = cartdata.items.find(item => item.product.toString() === productId);
+        const oldquantity = productofcart.quantity;
+        const diffquantity=oldquantity-quantity
+        const updatestock = await Product.findOneAndUpdate({_id:productId})
+        updatestock.stock=updatestock.stock+diffquantity
         const cart = await Cart.findOneAndUpdate({ user: userId, "items.product": productId }, { $set: { "items.$.quantity": quantity } }, { new: true })
         if (!cart) return res.status(404).json({ message: "Cart not found" });
         let total = 0
@@ -148,6 +163,7 @@ export const updatecart = async (req, res) => {
         }
         cart.totalPrice = total
         await cart.save()
+        await updatestock.save()
         res.status(200).json({ message: "Cart updated", cart });
 
     } catch (err) {
