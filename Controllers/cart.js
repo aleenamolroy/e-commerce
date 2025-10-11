@@ -175,13 +175,16 @@ export const deletecart = async (req, res) => {
     try {
         const userId = req.session.user?.id
         const productId = req.params.id
+        const {quantity}=req.body
         if (!userId) return res.status(401).json({ message: "Not logged in" });
         if (!productId) return res.status(400).json({ message: "Product ID required" });
         const deletecart = await Cart.findOneAndUpdate({ user: userId, "items.product": productId }, { $pull: { items: { product: productId } } }, { new: true })
+        const productstock=await Product.findByIdAndUpdate({_id:productId});
+        console.log(quantity)
+        productstock.stock=productstock.stock+quantity
         if (!deletecart) {
             return res.status(404).json({ message: "cart not found" })
         }
-        console.log(deletecart)
         let total = 0
         for (const item of deletecart.items) {
             const p = await Product.findById(item.product)
@@ -189,6 +192,8 @@ export const deletecart = async (req, res) => {
         }
         deletecart.totalPrice = total
         await deletecart.save()
+        await productstock.save()
+
         return res.status(200).json({ message: "successfully deleted item from cart", deletecart })
 
     }
