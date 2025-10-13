@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { list, product_seacrch, productadd, productDelete, productEdit } from "../Controllers/product.js";
+import { list, product_seacrch, productadd, productDelete, productEdit, searchProduct } from "../Controllers/product.js";
 import { isAdmin } from "../Middleware/adminauth.js";
 const router = Router()
 const storage=multer.diskStorage({
@@ -13,6 +13,7 @@ const storage=multer.diskStorage({
 })
 router.get('/list',list)
 router.get('/productsearch/:id',product_seacrch)
+router.get('/searchProduct',searchProduct)
 router.use(isAdmin)
 const upload=multer({storage:storage})
 router.post('/productadd',upload.single('productimg'),productadd)

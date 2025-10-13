@@ -17,10 +17,24 @@ export const product_seacrch = async (req, res) => {
         return res.status(500).json({ message: "server error" })
     }
 }
-
+export const searchProduct = async (req, res) => {
+    try {
+        const { name } = req.query
+        const products = await Product.find({ name: { $regex: name, $options: "i" } }).populate("category", "name")
+        if (products.length === 0) {
+            return res.status(404).json({ message: "Product not found" })
+        }
+        console.log(products)
+        return res.status(200).json({ products })
+    }
+    catch (err) {
+        console.log(err)
+        return res.status(500).json({ message: "server error" })
+    }
+}
 export const list = async (req, res) => {
     try {
-        const products = await Product.find().populate("category", "name"); 
+        const products = await Product.find().populate("category", "name");
         console.log(products)
         return res.status(200).json({ products })
     }
