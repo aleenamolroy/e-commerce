@@ -19,7 +19,9 @@ export const product_seacrch = async (req, res) => {
 }
 export const searchProduct = async (req, res) => {
     try {
-        const { name } = req.query
+        const {name}  = req.query
+        console.log(name);
+        
         const products = await Product.find({ name: { $regex: name, $options: "i" } }).populate("category", "name")
         if (products.length === 0) {
             return res.status(404).json({ message: "Product not found" })

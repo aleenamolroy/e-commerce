@@ -127,11 +127,11 @@ export const AddCart = async (req, res) => {
         product.stock = product.stock - quantity
         await cart.save()
         await product.save()
-        return res.status(200).json({ cart, message: "Added to cart" })
+        return res.status(200).json({ cart, message: "Added to cart", success: true })
     }
     catch (err) {
         console.log(err)
-        return res.status(500)
+        return res.status(500).json({ message: "internal error", success: false })
     }
 }
 
@@ -151,9 +151,9 @@ export const updatecart = async (req, res) => {
         const cartdata = await Cart.findOne({ user: userId });
         const productofcart = cartdata.items.find(item => item.product.toString() === productId);
         const oldquantity = productofcart.quantity;
-        const diffquantity=oldquantity-quantity
-        const updatestock = await Product.findOneAndUpdate({_id:productId})
-        updatestock.stock=updatestock.stock+diffquantity
+        const diffquantity = oldquantity - quantity
+        const updatestock = await Product.findOneAndUpdate({ _id: productId })
+        updatestock.stock = updatestock.stock + diffquantity
         const cart = await Cart.findOneAndUpdate({ user: userId, "items.product": productId }, { $set: { "items.$.quantity": quantity } }, { new: true })
         if (!cart) return res.status(404).json({ message: "Cart not found" });
         let total = 0
@@ -175,13 +175,13 @@ export const deletecart = async (req, res) => {
     try {
         const userId = req.session.user?.id
         const productId = req.params.id
-        const {quantity}=req.body
+        const { quantity } = req.body
         if (!userId) return res.status(401).json({ message: "Not logged in" });
         if (!productId) return res.status(400).json({ message: "Product ID required" });
         const deletecart = await Cart.findOneAndUpdate({ user: userId, "items.product": productId }, { $pull: { items: { product: productId } } }, { new: true })
-        const productstock=await Product.findByIdAndUpdate({_id:productId});
+        const productstock = await Product.findByIdAndUpdate({ _id: productId });
         console.log(quantity)
-        productstock.stock=productstock.stock+quantity
+        productstock.stock = productstock.stock + quantity
         if (!deletecart) {
             return res.status(404).json({ message: "cart not found" })
         }
@@ -200,5 +200,20 @@ export const deletecart = async (req, res) => {
     catch (err) {
         console.log(err)
         return res.status(500)
+    }
+}
+
+export const cartcount = async (req, res) => {
+    try {
+        const checkcart = await Cart.findOne({ user: req.session.user.id });
+        if (!checkcart) {
+            return res.status(404).json({ message: "Cart not found", success: false })
+        }
+        const count = checkcart.items?.length ?? 0;
+        console.log(count)
+        return res.status(200).json({ message: "cart product count ", count, success: true })
+
+    } catch (err) {
+        console.log(err)
     }
 }
