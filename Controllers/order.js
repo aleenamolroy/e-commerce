@@ -244,13 +244,14 @@ export const update_status = async (req, res) => {
                     message: `Invalid shipping status transition from "${order.shippingStatus}" to "${shippingStatus}"`,
                 });
         }
+        
         const Updateorder = await Order.findByIdAndUpdate(id, { paymentStatus, shippingStatus }, { new: true })
         // const orderId = new mongoose.Types.ObjectId(id)
         if (!Updateorder) {
             return res.status(404).json({ message: "order not found" })
         }
 
-        return res.status(200).json({ message: "status changed" })
+        return res.status(200).json({ message: "status changed",updatedOrder: Updateorder})
     }
     catch (err) {
         console.log(err);
@@ -272,7 +273,7 @@ export const cancel_order = async (req, res) => {
             return res.status(400).json({ message: "You can't cancell this order please check the order status" })
         }
         const orderUpdate = await Order.findByIdAndUpdate(id, { shippingStatus }, { new: true })
-        return res.status(200).json({ message: "order cancelled" })
+        return res.status(200).json({ message: "order cancelled" ,updatedOrder: orderUpdate })
     }
     catch (err) {
         console.log(err);

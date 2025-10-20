@@ -84,7 +84,7 @@ export const update=async (req,res)=>{
             photo=req.file.filename
         }
         const {name,email,profile_image}=req.body
-        const updateUser= await User.findByIdAndUpdate(req.session.user.id,{name,email,profile_image:photo})
+        const updateUser= await User.findByIdAndUpdate(req.session.user.id,{name,email,profile_image:photo},{new:true})
         return res.status(200).json({message:"successfully updated",data:updateUser})
     }
     catch(err){

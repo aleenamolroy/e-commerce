@@ -49,7 +49,7 @@ export const showcart = async (req, res) => {
                 }
             }
         ])
-        console.log(cart)
+        // console.log(cart)
         return res.status(200).json(cart)
     }
     catch (err) {
@@ -140,7 +140,7 @@ export const updatecart = async (req, res) => {
         const userId = req.session.user.id
         const productId = req.params.id
         const { quantity } = req.body
-        console.log(quantity)
+        // console.log(quantity)
         // const product= await Product.findById(productId)
         // const newCart= await Cart.findOne({user:userId})
         // if (!newCart) return res.status(404).json({ message: "Cart not found" });
@@ -210,7 +210,7 @@ export const cartcount = async (req, res) => {
             return res.status(404).json({ message: "Cart not found", success: false })
         }
         const count = checkcart.items?.length ?? 0;
-        console.log(count)
+        // console.log(count)
         return res.status(200).json({ message: "cart product count ", count, success: true })
 
     } catch (err) {
