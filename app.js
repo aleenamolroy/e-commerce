@@ -41,7 +41,7 @@ app.use(session({
         rolling: true
 }))
 app.use(cors({
-    origin:["http://localhost:5174","http://localhost:5173","http://localhost:5175"],
+    origin:["http://localhost:5174","http://localhost:5173","http://localhost:5175","http://13.50.244.127"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials:true
 }))
