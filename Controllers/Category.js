@@ -17,6 +17,7 @@ export const categorylist= async (req,res)=>{
 export const categoryAdd= async (req,res)=>{
          
     try{
+	console.log("api rached")
         const {name,description}=req.body;        
         const newcategory= new Category({name:name,description:description})
         await newcategory.save()
