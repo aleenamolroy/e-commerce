@@ -46,12 +46,12 @@ app.use(cors({
     credentials:true
 }))
 app.use("/api/uploads", express.static(path.join(process.cwd(), "uploads")));
-app.use('/admin',admin)
-app.use('/user',user)
-app.use('/category',category)
-app.use('/product',product)
-app.use('/cart',cart)
-app.use('/order',order)
-app.use('/logout',logout)
+app.use('/api/admin',admin)
+app.use('/api/user',user)
+app.use('/api/category',category)
+app.use('/api/product',product)
+app.use('/api/cart',cart)
+app.use('/api/order',order)
+app.use('/api/logout',logout)
 app.listen(process.env.PORT,()=>{console.log(`http://localhost:${process.env.PORT}`);
 })
