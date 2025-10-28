@@ -45,7 +45,7 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials:true
 }))
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/api/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use('/admin',admin)
 app.use('/user',user)
 app.use('/category',category)
